@@ -16,16 +16,38 @@ class KirigamiConan(ConanFile):
     license = "GNU LGPL-2.0"
     settings = ("os", "compiler", "arch", "build_type")
     requires = "Qt/[^5.14]@tereius/stable"
-    build_requires = "extra-cmake-modules/5.80.0@tereius/stable"
+    generators = "cmake"
+    default_options = (
+        "Qt:shared=True",
+        "Qt:GUI=True",
+        "Qt:widgets=True",
+        "Qt:openssl=True",
+        "Qt:qtbase=True",
+        "Qt:qtsvg=True",
+        "Qt:qtdeclarative=True",
+        "Qt:qttools=True",
+        "Qt:qttranslations=True",
+        "Qt:qtgraphicaleffects=True",
+        "Qt:qtquickcontrols2=True")
+
+    def build_requirements(self):
+        self.build_requires("extra-cmake-modules/5.80.0@tereius/stable", force_host_context=True)
+
+    def configure(self):
+        if self.settings.os == 'Android':
+            self.options["Qt"].qtandroidextras = True
 
     def source(self):
         source_url = "https://invent.kde.org/frameworks/kirigami/-/archive/v{0}/kirigami-v{0}.zip".format(self.version)
         tools.get(source_url)
-
+        tools.replace_in_file(os.path.join("kirigami-v%s" % self.version, "CMakeLists.txt"), "################# Disallow in-source build #################",
+                              'if (EXISTS "${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")\n \
+                               include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")\n \
+                               conan_basic_setup(KEEP_RPATHS)\n \
+                               endif ()')
+        
     def build(self):
         cmake = CMake(self)
-        paths = self.deps_cpp_info["extra-cmake-modules"].build_paths
-        cmake.definitions["CMAKE_PREFIX_PATH"] = ";".join(paths) 
         cmake.configure(source_folder="kirigami-v%s" % self.version)
         cmake.build()
         cmake.install()
