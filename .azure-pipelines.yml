@@ -6,30 +6,186 @@ resources:
       endpoint: Tereius
 
 jobs:
-- job: Build
+- job: Android
   strategy:
     matrix:
-      Linux:
+      armv7Linux:
         imageName: "ubuntu-18.04"
-        conanBuildOS: "Linux"
+        buildProfile: "androidArmv7LinuxHost"
+      armv8Linux:
+        imageName: "ubuntu-18.04"
+        buildProfile: "androidArmv8LinuxHost"
+      x86Linux:
+        imageName: "ubuntu-18.04"
+        buildProfile: "androidx86LinuxHost"
+      x86_64Linux:
+        imageName: "ubuntu-18.04"
+        buildProfile: "androidx86_64LinuxHost"
+      armv7Windows:
+        imageName: "vs2017-win2016"
+        buildProfile: "androidArmv7WinHost"
+      armv8Windows:
+        imageName: "vs2017-win2016"
+        buildProfile: "androidArmv8WinHost"
+      x86Windows:
+        imageName: "vs2017-win2016"
+        buildProfile: "androidx86WinHost"
+      x86_64Windows:
+        imageName: "vs2017-win2016"
+        buildProfile: "androidx86_64WinHost"
   pool:
     vmImage: '$(imageName)'
-  timeoutInMinutes: 30
+  timeoutInMinutes: 0
   steps:
   - template: buildConanRecipe.yml@templates
     parameters: 
       conanEnv: {
         CONAN_USERNAME: "tereius",
         CONAN_CHANNEL: "stable",
-        CONAN_REMOTES: "https://conan.privatehive.de/artifactory/api/conan/public-conan"
+        CONAN_REMOTES: "https://conan.privatehive.de/artifactory/api/conan/public-conan",
+        CONAN_BASE_PROFILE_PATH: "./buildProfiles/$(buildProfile).profile",
+        CONAN_BUILD_PROFILE: "default"
       }
 
-- job: Upload
-  dependsOn:
-  - Build
-  condition: and(succeeded(), in(variables['Build.Reason'], 'IndividualCI', 'BatchedCI'))
+- job: Raspbian
+  strategy:
+    matrix:
+      Debug:
+        buildType: "Debug"
+      Release:
+        buildType: "Release"
   pool:
     vmImage: "ubuntu-18.04"
+  timeoutInMinutes: 0
+  steps:
+  - template: buildConanRecipe.yml@templates
+    parameters:
+      conanEnv: {
+        CONAN_USERNAME: "tereius",
+        CONAN_CHANNEL: "stable",
+        CONAN_REMOTES: "https://conan.privatehive.de/artifactory/api/conan/public-conan",
+        CONAN_BASE_PROFILE_BUILDTYPE: "$(buildType)",
+        CONAN_BASE_PROFILE_PATH: "./buildProfiles/raspbian.profile"
+      }
+      
+- job: Linux
+  strategy:
+    matrix:
+      Debug:
+        buildType: "Debug"
+      Release:
+        buildType: "Release"
+  pool:
+    vmImage: "ubuntu-18.04"
+  timeoutInMinutes: 0
+  steps:
+  - template: buildConanRecipe.yml@templates
+    parameters:
+      conanEnv: {
+        CONAN_USERNAME: "tereius",
+        CONAN_CHANNEL: "stable",
+        CONAN_REMOTES: "https://conan.privatehive.de/artifactory/api/conan/public-conan",
+        CONAN_BASE_PROFILE_BUILDTYPE: "$(buildType)",
+        CONAN_BASE_PROFILE_OS: "Linux",
+        CONAN_BASE_PROFILE_ARCH: "x86_64",
+        CONAN_BASE_PROFILE_OSBUILD: "Linux",
+        CONAN_BASE_PROFILE_ARCHBUILD: "x86_64",
+        CONAN_BASE_PROFILE_COMPILER: "gcc",
+        CONAN_BASE_PROFILE_COMPILER_VERSION: "7",
+        CONAN_BASE_PROFILE_COMPILER_LIBCXX: "libstdc++"
+      }
+
+- job: Windows
+  strategy:
+    matrix:
+      Debug:
+        buildType: "Debug"
+      Release:
+        buildType: "Release"
+  pool:
+    vmImage: "vs2017-win2016"
+  timeoutInMinutes: 0
+  steps:
+  - template: buildConanRecipe.yml@templates
+    parameters:
+      conanEnv: {
+        CONAN_USERNAME: "tereius",
+        CONAN_CHANNEL: "stable",
+        CONAN_REMOTES: "https://conan.privatehive.de/artifactory/api/conan/public-conan",
+        CONAN_BASE_PROFILE_BUILDTYPE: "$(buildType)",
+        CONAN_BASE_PROFILE_OS: "Windows",
+        CONAN_BASE_PROFILE_ARCH: "x86_64",
+        CONAN_BASE_PROFILE_OSBUILD: "Windows",
+        CONAN_BASE_PROFILE_ARCHBUILD: "x86_64",
+        CONAN_BASE_PROFILE_COMPILER: "Visual Studio",
+        CONAN_BASE_PROFILE_COMPILER_VERSION: "15"
+      }
+      
+- job: Macos
+  strategy:
+    matrix:
+      Debug:
+        buildType: "Debug"
+      Release:
+        buildType: "Release"
+  pool:
+    vmImage: "macOS-10.14"
+  timeoutInMinutes: 0
+  steps:
+  - template: buildConanRecipe.yml@templates
+    parameters:
+      conanEnv: {
+        CONAN_USERNAME: "tereius",
+        CONAN_CHANNEL: "stable",
+        CONAN_REMOTES: "https://conan.privatehive.de/artifactory/api/conan/public-conan",
+        CONAN_BASE_PROFILE_BUILDTYPE: "$(buildType)",
+        CONAN_BASE_PROFILE_OS: "Macos",
+        CONAN_BASE_PROFILE_OS_VERSION: "10.14",
+        CONAN_BASE_PROFILE_ARCH: "x86_64",
+        CONAN_BASE_PROFILE_OSBUILD: "Macos",
+        CONAN_BASE_PROFILE_ARCHBUILD: "x86_64",
+        CONAN_BASE_PROFILE_COMPILER: "apple-clang",
+        CONAN_BASE_PROFILE_COMPILER_VERSION: "10.0",
+        CONAN_BASE_PROFILE_COMPILER_LIBCXX: "libc++"
+      }
+      
+#- job: Emscripten
+#  strategy:
+#    matrix:
+#      Debug:
+#        buildType: "Debug"
+#      Release:
+#        buildType: "Release"
+#  pool:
+#    vmImage: "ubuntu-18.04"
+#  timeoutInMinutes: 0
+#  steps:
+#  - template: buildConanRecipe.yml@templates
+#    parameters:
+#      conanEnv: {
+#        CONAN_USERNAME: "tereius",
+#        CONAN_CHANNEL: "stable",
+#        CONAN_REMOTES: "https://conan.privatehive.de/artifactory/api/conan/public-conan",
+#        CONAN_BASE_PROFILE_BUILDTYPE: "$(buildType)",
+#        CONAN_BASE_PROFILE_OS: "Emscripten",
+#        CONAN_BASE_PROFILE_ARCH: "asm.js",
+#        CONAN_BASE_PROFILE_OSBUILD: "Linux",
+#        CONAN_BASE_PROFILE_ARCHBUILD: "x86_64",
+#        CONAN_BASE_PROFILE_COMPILER: "clang",
+#        CONAN_BASE_PROFILE_COMPILER_VERSION: "6.0",
+#        CONAN_BASE_PROFILE_COMPILER_LIBCXX: "libc++",
+#        CONAN_OPTIONS: "Qt:GUI=True,Qt:widgets=True,Qt:qtbase=True,Qt:qtsvg=True,Qt:qtdeclarative=True,Qt:qttools=True,Qt:qttranslations=True,Qt:qtgraphicaleffects=True,Qt:qtquickcontrols2=True,Qt:qtquickcontrols=True,Qt:qtimageformats=True"
+#      }
+    
+- job: Upload
+  dependsOn:
+  - Android
+  - Linux
+  - Windows
+  - Macos
+  condition: and(succeeded(), in(variables['Build.Reason'], 'IndividualCI', 'BatchedCI'))
+  pool:
+    vmImage: "ubuntu-latest"
   steps:
   - template: uploadConanRecipe.yml@templates
     parameters: 
