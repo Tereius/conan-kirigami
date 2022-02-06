@@ -9,7 +9,7 @@ import shutil
 
 class KirigamiConan(ConanFile):
     name = "Kirigami"
-    version = "5.80.0"
+    version = "5.90.0"
     description = "Kirigami is a set of QtQuick components at the moment targeted for mobile use (in the future desktop as well) targeting both Plasma Mobile and Android"
     url = "https://github.com/Tereius/conan-kirigami"
     homepage = "https://invent.kde.org/frameworks/kirigami"
@@ -31,7 +31,7 @@ class KirigamiConan(ConanFile):
         "Qt:qtquickcontrols2=True")
 
     def build_requirements(self):
-        self.build_requires("extra-cmake-modules/5.80.0@tereius/stable", force_host_context=True)
+        self.build_requires("extra-cmake-modules/{0}@tereius/stable".format(self.version), force_host_context=True)
 
     def configure(self):
         if self.settings.os == 'Android':
@@ -45,12 +45,19 @@ class KirigamiConan(ConanFile):
                                include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")\n \
                                conan_basic_setup(KEEP_RPATHS)\n \
                                endif ()')
+        tools.get("https://invent.kde.org/frameworks/breeze-icons/-/archive/v{0}/breeze-icons-v{0}.zip".format(self.version), destination="kirigami-v%s" % self.version)
+        tools.rename("kirigami-v{0}/breeze-icons-v{0}".format(self.version), "kirigami-v{0}/breeze-icons".format(self.version))
+        self.run("chmod +x -R ./scripts && ./scripts/gen_icons_qrc.sh > kirigami-icons.qrc", cwd="kirigami-v%s" % self.version, win_bash=tools.os_info.is_windows)
         
     def build(self):
         cmake = CMake(self)
         cmake.configure(source_folder="kirigami-v%s" % self.version)
         cmake.build()
         cmake.install()
+
+    #def package(self):
+    #    self.copy("*.svg", src="kirigami-v%s" % self.version)
+    #    self.copy("*-icons.qrc")
 
     def package_info(self):
         self.env_info.QML_IMPORT_PATH.append(os.path.join(self.package_folder, "lib", "qml"))

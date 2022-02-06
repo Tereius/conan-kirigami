@@ -1,0 +1,42 @@
+resources:
+  repositories:
+    - repository: templates
+      type: github
+      name: Tereius/conan-azure-templates
+      endpoint: Tereius
+
+jobs:
+- job: Build
+  strategy:
+    matrix:
+      Linux:
+        imageName: "ubuntu-18.04"
+        conanBuildOS: "Linux"
+  pool:
+    vmImage: '$(imageName)'
+  timeoutInMinutes: 30
+  steps:
+  - template: buildConanRecipe.yml@templates
+    parameters: 
+      conanEnv: {
+        CONAN_USERNAME: "tereius",
+        CONAN_CHANNEL: "stable",
+        CONAN_REMOTES: "https://conan.privatehive.de/artifactory/api/conan/public-conan"
+      }
+
+- job: Upload
+  dependsOn:
+  - Build
+  condition: and(succeeded(), in(variables['Build.Reason'], 'IndividualCI', 'BatchedCI'))
+  pool:
+    vmImage: "ubuntu-18.04"
+  steps:
+  - template: uploadConanRecipe.yml@templates
+    parameters: 
+      conanEnv: {
+        CONAN_USERNAME: "tereius",
+        CONAN_CHANNEL: "stable",
+        CONAN_UPLOAD: "https://conan.privatehive.de/artifactory/api/conan/public-conan",
+        CONAN_LOGIN_USERNAME: "ci",
+        CONAN_PASSWORD: "$(secret)",
+      }
