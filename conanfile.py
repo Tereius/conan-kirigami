@@ -40,6 +40,7 @@ class KirigamiConan(ConanFile):
     def source(self):
         source_url = "https://invent.kde.org/frameworks/kirigami/-/archive/v{0}/kirigami-v{0}.zip".format(self.version)
         tools.get(source_url)
+        tools.replace_in_file(os.path.join("kirigami-v%s" % self.version, "src", "controls", "templates", "private", "ScrollView.qml"), "id: root", "id: root\nhoverEnabled: Qt.styleHints.useHoverEffects\n")
         tools.replace_in_file(os.path.join("kirigami-v%s" % self.version, "CMakeLists.txt"), "################# Disallow in-source build #################",
                               'if (EXISTS "${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")\n \
                                include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")\n \
