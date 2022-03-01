@@ -51,7 +51,10 @@ class KirigamiConan(ConanFile):
         self.run("chmod +x -R ./scripts && ./scripts/gen_icons_qrc.sh > kirigami-icons.qrc", cwd="kirigami-v%s" % self.version, win_bash=tools.os_info.is_windows)
         
     def build(self):
-        cmake = CMake(self)
+        if self.settings.os == 'Android':
+            cmake = CMake(self, generator="Unix Makefiles")
+        else:
+            cmake = CMake(self)
         cmake.configure(source_folder="kirigami-v%s" % self.version)
         cmake.build()
         cmake.install()
