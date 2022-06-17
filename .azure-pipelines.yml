@@ -129,7 +129,7 @@ jobs:
       Release:
         buildType: "Release"
   pool:
-    vmImage: "macOS-10.14"
+    vmImage: "macOS-10.15"
   timeoutInMinutes: 0
   steps:
   - template: buildConanRecipe.yml@templates
