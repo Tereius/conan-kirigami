@@ -49,7 +49,7 @@ class KirigamiConan(ConanFile):
                                endif ()')
         tools.get("https://invent.kde.org/frameworks/breeze-icons/-/archive/v{0}/breeze-icons-v{0}.zip".format(self.version), destination="kirigami-v%s" % self.version)
         tools.rename("kirigami-v{0}/breeze-icons-v{0}".format(self.version), "kirigami-v{0}/breeze-icons".format(self.version))
-        self.run("chmod +x -R ./scripts && ./scripts/gen_icons_qrc.sh > kirigami-icons.qrc", cwd="kirigami-v%s" % self.version, win_bash=tools.os_info.is_windows)
+        self.run("chmod -R +x scripts && ./scripts/gen_icons_qrc.sh > kirigami-icons.qrc", cwd="kirigami-v%s" % self.version, win_bash=tools.os_info.is_windows)
         
     def build(self):
         if self.settings.os == 'Android':
