@@ -49,6 +49,7 @@ class KirigamiConan(ConanFile):
                                endif ()')
         tools.get("https://invent.kde.org/frameworks/breeze-icons/-/archive/v{0}/breeze-icons-v{0}.zip".format(self.version), destination="kirigami-v%s" % self.version)
         tools.rename("kirigami-v{0}/breeze-icons-v{0}".format(self.version), "kirigami-v{0}/breeze-icons".format(self.version))
+        tools.replace_in_file(os.path.join("kirigami-v%s" % self.version, "scripts", "gen_icons_qrc.sh"), 'kirigami_dir="$(cd $(dirname $(readlink -f $0))/.. && pwd)"', 'kirigami_dir="$(pwd)"')
         self.run("chmod -R +x scripts && ./scripts/gen_icons_qrc.sh > kirigami-icons.qrc", cwd="kirigami-v%s" % self.version, win_bash=tools.os_info.is_windows)
         
     def build(self):
